@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_REPO = ‘mmaaroju/abstergo-portal'
+        DOCKER_HUB_REPO = 'mmaaroju/abstergo-portal'
         DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
     }
 
