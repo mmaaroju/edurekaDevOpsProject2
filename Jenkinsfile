@@ -14,11 +14,7 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-             when {
-                branch 'master'
-            }
-
-            steps {
+           steps {
                script {
                     dockerImage = docker.build("${DOCKER_HUB_REPO}:${env.BUILD_ID}")
                 }
