@@ -49,16 +49,18 @@ pipeline {
                 }
                 
               } */
+            
             steps {
-               withCredentials([string(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG_CONTENT')]) {
-               sh '''
-                  echo "$KUBECONFIG_CONTENT" > kubeconfig_temp
-                  export KUBECONFIG=kubeconfig_temp
-                  kubectl apply -f deployment.yaml
-                 rm kubeconfig_temp
-               '''
-              }
+              withCredentials([string(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG_CONTENT')]) {
+              sh '''
+                printf "%s" "$KUBECONFIG_CONTENT" > kubeconfig_temp
+                export KUBECONFIG=kubeconfig_temp
+                kubectl apply -f deployment.yaml
+                rm kubeconfig_temp
+                '''
+               }
             }
+
          }
     }
 
