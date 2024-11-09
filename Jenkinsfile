@@ -41,16 +41,26 @@ pipeline {
                 }
             } */
 
-            steps {
+           /* steps {
                 withCredentials([file(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG')]) {
                  sh 'kubectl apply -f deployment.yaml'
                  sh 'kubectl apply -f service.yaml'
                  // sh 'kubectl set image deployment.apps/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
                 }
                 
+              } */
+            steps {
+               withCredentials([string(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG_CONTENT')]) {
+               sh '''
+                  echo "$KUBECONFIG_CONTENT" > kubeconfig_temp
+                  export KUBECONFIG=kubeconfig_temp
+                  kubectl apply -f deployment.yaml
+                 rm kubeconfig_temp
+               '''
               }
             }
-        }
+         }
+    }
 
     post {
         always {
