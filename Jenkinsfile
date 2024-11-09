@@ -33,21 +33,24 @@ pipeline {
          }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                 kubernetesDeploy(
-                    kubeconfigId: 'k8s-credentials',
-                    configs: 'deployment.yaml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: 'k8s-credentials',
-                    configs: 'service.yaml',
-                    enableConfigSubstitution: true
-                )
+            /* steps {
+                withKubeConfig([credentialsId: 'k8s-credentials', contextName: 'your-k8s-cluster']) {
+                    script {
+                        sh 'kubectl set image deployment/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
+                    }
                 }
+            } */
+
+            steps {
+                withCredentials([file(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG')]) {
+                 sh 'kubectl apply -f deployment.yaml'
+                 sh 'kubectl apply -f service.yaml'
+                 // sh 'kubectl set image deployment.apps/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
+                }
+                
+              }
             }
         }
-
 
     post {
         always {
