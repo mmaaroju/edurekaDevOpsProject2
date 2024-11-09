@@ -14,14 +14,24 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+             when {
+                branch 'master'
+            }
 
             steps {
-                script {
-                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${env.BUILD_ID}")
-                    dockerImage .inside {
-                        sh 'echo  Docker Image Getting Built!'
-                    }
-                  }
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'deployment.yaml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'service.yaml',
+                    enableConfigSubstitution: true
+                )
+             }
             }
         }
 
