@@ -19,21 +19,11 @@ pipeline {
             }
 
             steps {
-                input 'Deploy to Production?'
-                milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'deployment.yaml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'service.yaml',
-                    enableConfigSubstitution: true
-                )
+               script {
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${env.BUILD_ID}")
+                }
              }
-            }
-        }
+         }
 
         stage('Push Docker Image to Docker Hub') {
             steps {
@@ -44,21 +34,24 @@ pipeline {
                     }
                 }
             }
-        }
+         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                withKubeConfig([credentialsId: 'k8s-credentials', 
-                               contextName: 'mmaaroju-k8s-cluster']) {
-                    script {
-                        sh 'echo  Deploy to Kubernetes!'
-                        sh 'echo  kubectl set image deployment.apps/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
-                        sh 'kubectl set image deployment.apps/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
-                    }
+                 kubernetesDeploy(
+                    kubeconfigId: ''k8s-credentials',
+                    configs: 'deployment.yaml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'k8s-credentials',
+                    configs: 'service.yaml',
+                    enableConfigSubstitution: true
+                )
                 }
             }
         }
-    }
+
 
     post {
         always {
