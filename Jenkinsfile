@@ -1,79 +1,56 @@
 pipeline {
     agent any
+
     environment {
-        //be sure to replace "bhavukm" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "bhavukm/train-schedule"
+        DOCKER_HUB_REPO = ‘mmaaroju/abstergo-portal'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
     }
+
     stages {
-        stage('Build') {
+        stage('Checkout Code') {
             steps {
-                echo 'Running build automation'
-                sh './gradlew build --no-daemon'
-                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+                git branch: 'main', url: ' https://github.com/mmaaroju/edurekaDevopsProject2.git'
             }
         }
+
         stage('Build Docker Image') {
-            when {
-                branch 'master'
-            }
+
             steps {
                 script {
-                    app = docker.build(DOCKER_IMAGE_NAME)
-                    app.inside {
-                        sh 'echo Hello, World!'
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${env.BUILD_ID}")
+                    dockerImage .inside {
+                        sh 'echo  Docker Image Getting Built!'
+                    }
+                  }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS_ID) {
+                        dockerImage.push("${env.BUILD_ID}")
+                        dockerImage.push("latest")
                     }
                 }
             }
         }
-        stage('Push Docker Image') {
-            when {
-                branch 'master'
-            }
+
+        stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
-                        app.push("${env.BUILD_NUMBER}")
-                        app.push("latest")
+                withKubeConfig([credentialsId: 'k8s-credentials', 
+                               contextName: 'mmaaroju-k8s-cluster']) {
+                    script {
+                        sh 'kubectl set image deployment/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
                     }
                 }
             }
         }
-        stage('CanaryDeploy') {
-            when {
-                branch 'master'
-            }
-            environment { 
-                CANARY_REPLICAS = 1
-            }
-            steps {
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-            }
-        }
-        stage('DeployToProduction') {
-            when {
-                branch 'master'
-            }
-            environment { 
-                CANARY_REPLICAS = 0
-            }
-            steps {
-                input 'Deploy to Production?'
-                milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
-            }
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
