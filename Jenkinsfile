@@ -41,7 +41,7 @@ pipeline {
                 withKubeConfig([credentialsId: 'k8s-credentials', 
                                contextName: 'mmaaroju-k8s-cluster']) {
                     script {
-                        sh 'kubectl set image deployment.app/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
+                        sh 'kubectl set image deployment.apps/abstergo-deployment abstergo-container=${DOCKER_HUB_REPO}:${env.BUILD_ID}'
                     }
                 }
             }
