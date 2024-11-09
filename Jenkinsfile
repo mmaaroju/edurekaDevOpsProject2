@@ -58,6 +58,7 @@ pipeline {
                 printf "%s" "$KUBECONFIG_CONTENT" > kubeconfig_temp
                 export KUBECONFIG=kubeconfig_temp
                 kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
                 rm kubeconfig_temp
                 '''
                }
