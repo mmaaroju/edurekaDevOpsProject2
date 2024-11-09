@@ -53,12 +53,13 @@ pipeline {
             steps {
               withCredentials([string(credentialsId: 'k8s-credentials', variable: 'KUBECONFIG_CONTENT')]) {
               sh '''
-                echo "Debug: KUBECONFIG_CONTENT starts with:"
-                echo "${KUBECONFIG_CONTENT:0:100}"  # Print first 100 characters for debugging
-                printf "%s" "$KUBECONFIG_CONTENT" > kubeconfig_temp
-                export KUBECONFIG=kubeconfig_temp
-                kubectl apply -f deployment.yaml
-                rm kubeconfig_temp
+                   echo "Debug: KUBECONFIG_CONTENT starts with:"
+                   echo "${KUBECONFIG_CONTENT:0:100}"  # Print first 100 characters for debugging
+                   printf "%s" "$KUBECONFIG_CONTENT" > kubeconfig_temp
+                   export KUBECONFIG=kubeconfig_temp
+                   kubectl apply -f deployment.yaml
+                   rm kubeconfig_temp
+                '''
                }
             }
 
